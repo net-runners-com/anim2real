@@ -4,13 +4,13 @@
   python3 pipeline.py jobs/calf_stretch_studio.json          # dry-run (プロンプトと概算費用だけ表示)
   python3 pipeline.py jobs/calf_stretch_studio.json --yes    # 実行 (課金される)
 """
-import hashlib, json, os, subprocess, sys, time, urllib.error, urllib.request
+import json, subprocess, sys, time
 from pathlib import Path
 
+from atlas import Atlas, AtlasError
+
 ROOT = Path(__file__).resolve().parent
-BASE = "https://api.atlascloud.ai/api/v1"
 MODEL = "bytedance/seedance-2.5/reference-to-video"
-CACHE = ROOT / "outputs/.upload_cache.json"
 # 実測: 720p / 19.7s = $7.136 (2026-10-05)。他解像度は未計測
 USD_PER_SEC = {"720p": 7.136064 / 19.712}
 
@@ -23,47 +23,6 @@ CAMERAS = {
         "Shot on a smartphone on a small tripod: static framing, natural phone exposure, mild sensor noise, "
         "deep focus, no cinematic lighting, no color grading."),
 }
-
-
-def load_env():
-    f = ROOT / ".env"
-    if f.exists():
-        for line in f.read_text().splitlines():
-            if "=" in line and not line.startswith("#"):
-                k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip().strip('"'))
-    key = os.environ.get("ATLASCLOUD_API_KEY")
-    if not key:
-        sys.exit("ATLASCLOUD_API_KEY が .env にありません")
-    return key
-
-
-def api(path, key, body=None):
-    r = urllib.request.Request(
-        BASE + path, data=json.dumps(body).encode() if body else None, method="POST" if body else "GET",
-        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "curl/8.7.1"})
-    try:
-        return json.load(urllib.request.urlopen(r, timeout=120))
-    except urllib.error.HTTPError as e:
-        sys.exit(f"HTTP {e.code}: {e.read().decode(errors='replace')[:400]}")
-
-
-def upload(path, key):
-    """同じ内容のファイルは再アップロードしない (sha256 キャッシュ)"""
-    cache = json.loads(CACHE.read_text()) if CACHE.exists() else {}
-    h = hashlib.sha256(path.read_bytes()).hexdigest()
-    if h in cache:
-        return cache[h]
-    out = subprocess.run(["curl", "-s", "-X", "POST", BASE + "/model/uploadMedia",
-                          "-H", "Authorization: Bearer " + key, "-F", f"file=@{path}"],
-                         capture_output=True, text=True, check=True).stdout
-    url = ((json.loads(out) or {}).get("data") or {}).get("download_url")
-    if not url:
-        sys.exit(f"upload 失敗 {path}: {out[:300]}")
-    cache[h] = url
-    CACHE.parent.mkdir(exist_ok=True)
-    CACHE.write_text(json.dumps(cache, indent=1))
-    return url
 
 
 def resolve(p):
@@ -131,41 +90,36 @@ def main():
         print("dry-run。実行するには --yes を付ける")
         return
 
-    key = load_env()
+    atlas = Atlas()
     body = {
-        "model": MODEL, "prompt": prompt,
-        "reference_videos": [upload(motion, key)],
-        "reference_images": [upload(model_img, key), upload(space_img, key)],
+        "prompt": prompt,
+        "reference_videos": [atlas.upload(motion)],
+        "reference_images": [atlas.upload(model_img), atlas.upload(space_img)],
         "omni_reference_task_type": "edit", "duration": -1, "ratio": "adaptive",
         "resolution": res, "generate_audio": job.get("generate_audio", True), "watermark": False,
     }
     outdir = ROOT / "outputs" / f"{name}_{time.strftime('%Y%m%d_%H%M%S')}"
     outdir.mkdir(parents=True)
     (outdir / "job.json").write_text(json.dumps(job, ensure_ascii=False, indent=1))
-    (outdir / "request.json").write_text(json.dumps(body, ensure_ascii=False, indent=1))
+    (outdir / "request.json").write_text(json.dumps({"model": MODEL, **body}, ensure_ascii=False, indent=1))
 
-    pid = api("/model/generateVideo", key, body)["data"]["id"]
+    pid = atlas.submit(MODEL, body)
     print("submitted", pid, "→", outdir, flush=True)
-    t0 = time.time()
-    while True:
-        time.sleep(10)
-        s = api(f"/model/prediction/{pid}", key)["data"]
-        if s.get("status") in ("completed", "failed", "timeout"):
-            break
-        print(f"  {int(time.time() - t0)}s {s.get('status')}", flush=True)
+    s = atlas.wait(pid, log=lambda m: print(m, flush=True))
     meta = {k: s.get(k) for k in ("id", "status", "error", "price", "total_tokens", "created_at", "completed_at")}
     (outdir / "result.json").write_text(json.dumps(meta, indent=1))
     if s["status"] != "completed":
         sys.exit(f"失敗: {meta}")
 
-    mp4 = outdir / f"{name}.mp4"
-    subprocess.run(["curl", "-sL", "-o", str(mp4), s["outputs"][0]], check=True)
+    mp4 = atlas.download(s["outputs"][0], outdir / f"{name}.mp4")
     subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp4), "-vf", "fps=0.5,scale=320:-1,tile=5x2",
                     "-frames:v", "1", "-y", str(outdir / "contact.jpg")], check=False)
     print(f"saved {mp4}  price ${meta['price']}")
     if "--open" in sys.argv:
         subprocess.run(["open", str(mp4)])
 
-
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except AtlasError as e:
+        sys.exit(str(e))

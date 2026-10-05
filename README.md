@@ -35,6 +35,26 @@ python3 pipeline.py jobs/calf_stretch_studio.json --yes --open
 - 編集モードでは、出力の縦横比と長さが入力動画と同じになる。縦長にしたいときは、`anim` 側で 9:16 にレンダし直す。
 - 送信した時点で課金される。キャンセル用の API は見つかっていない。
 
+## Atlas Cloud クライアント（`atlas.py`）
+
+`pipeline.py` からも使い、単体でも動く。依存は標準ライブラリと curl だけ。
+
+```bash
+python3 atlas.py models seedance        # モデル一覧と基本価格
+python3 atlas.py schema bytedance/seedance-2.5/reference-to-video
+python3 atlas.py upload assets/spaces/white_studio.png
+python3 atlas.py status <prediction_id> # 状態・実際の費用・出力 URL
+```
+
+```python
+from atlas import Atlas
+a = Atlas()
+pid = a.submit("bytedance/seedance-2.5/reference-to-video", {"prompt": "...", "reference_images": [a.upload("x.png")]})
+s = a.wait(pid); a.download(s["outputs"][0], "out.mp4")
+```
+
+APIキーは `.env` の `ATLASCLOUD_API_KEY` から読む（git の管理対象外）。
+
 ## anim との連携
 
 1. `anim/scripts/8x_*.py` でモーションを作り、`anim/renders/*.mp4` にレンダする
