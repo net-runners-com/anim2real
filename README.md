@@ -1,0 +1,37 @@
+# anim2real
+
+`anim` で作ったマネキンのモーション動画を、Seedance 2.5（Atlas Cloud）で「指定した人物 × 指定した空間 × スマホ撮影風」の実写動画に変換する。
+
+## 入力（ジョブ設定 `jobs/*.json`）
+
+| キー | 内容 |
+|---|---|
+| `motion` | マネキン（Tポーズのリグ）でレンダした動画。例 `../anim/renders/calf_stretch_v2.mp4`。4〜30秒・24fps 以上 |
+| `model_image` / `model_desc` | 人物モデルの画像と、服装などの英文説明 |
+| `space_image` / `space_desc` | 空間の画像と英文説明（置きたくない物は "no mat" のように明記） |
+| `action_desc` | 動きの説明（動画の動きを補足する） |
+| `camera` | `smartphone_handheld`（デフォルト）/ `tripod_phone` |
+| `resolution` | `720p` 推奨（費用を実測済みなのはこれだけ） |
+| `audio` | 環境音の指示 |
+
+## 実行
+
+```bash
+python3 pipeline.py jobs/calf_stretch_studio.json           # dry-run：プロンプトと概算費用だけ表示
+python3 pipeline.py jobs/calf_stretch_studio.json --yes --open
+```
+
+出力は `outputs/<name>_<日時>/` に、`<name>.mp4`・`contact.jpg`（2秒ごとのコマ）・`request.json`・`result.json`（実際の費用）を保存する。
+同じ内容のファイルは再アップロードしない（`outputs/.upload_cache.json`）。
+
+## 費用
+
+- 実測：720p・19.7秒で **$7.14**（約 $0.36/秒）。表示されている "$0.134" は最低単価であって、実際の費用ではない。
+- 編集モードでは、出力の縦横比と長さが入力動画と同じになる。縦長にしたいときは、`anim` 側で 9:16 にレンダし直す。
+- 送信した時点で課金される。キャンセル用の API は見つかっていない。
+
+## anim との連携
+
+1. `anim/scripts/8x_*.py` でモーションを作り、`anim/renders/*.mp4` にレンダする
+2. `jobs/` に設定を作り、`motion` にそのパスを書く
+3. `pipeline.py` で dry-run してプロンプトを確認してから `--yes` で実行する

@@ -1,0 +1,12 @@
+{
+ "name": "calf_stretch_studio",
+ "motion": "../anim/renders/calf_stretch_v2.mp4",
+ "model_image": "assets/models/woman_beige_suit.png",
+ "model_desc": "a young Japanese woman wearing a white blouse, beige tweed jacket, beige wide-leg trousers and white sneakers.",
+ "space_image": "assets/spaces/white_studio.png",
+ "space_desc": "a plain off-white wall, light grey concrete-like floor with no mat or rug, a simple white chair standing directly on the bare floor, soft even natural daylight, nothing else in the room.",
+ "action_desc": "she sits on the chair and does a gentle seated calf and hamstring stretch, extending one leg forward with the heel on the floor and toes up, leaning forward and reaching her hands toward the shin, then switching legs. Calm, relaxed breathing, slight natural smile, moves slowly like an office worker taking a short break.",
+ "camera": "smartphone_handheld",
+ "resolution": "720p",
+ "audio": "Quiet room tone only, no music, no speech."
+}
