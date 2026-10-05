@@ -16,5 +16,11 @@
  "space_desc": "a plain off-white wall, light grey concrete-like floor with no mat or rug, a simple white chair standing directly on the bare floor, soft even natural daylight, nothing else in the room.",
  "action_desc": "she sits on the chair and does a gentle seated calf and hamstring stretch, extending one leg forward with the heel on the floor and toes up, leaning forward and reaching her hands toward the shin, then switching legs. Calm, relaxed breathing, slight natural smile, moves slowly like an office worker taking a short break.",
  "camera": "smartphone_handheld",
- "resolution": "720p"
+ "resolution": "720p",
+ "music": {
+  "caption": "light acoustic piano with soft acoustic guitar, calm and positive wellness background music, gentle steady rhythm, warm, unobtrusive, no vocals",
+  "bpm": 80,
+  "key": "C Major",
+  "ts": "4"
+ }
 }

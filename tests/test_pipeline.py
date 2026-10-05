@@ -10,7 +10,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "blender")]
-import atlas, make, pipeline  # noqa: E402
+import add_music, atlas, make, pipeline  # noqa: E402
 
 PERSON = {"image": "assets/models/woman_beige_suit.png", "base": "a man in his 40s",
           "outfit": "navy polo shirt", "audience": "factory workers"}
@@ -160,6 +160,50 @@ class Atlas(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(atlas, "ROOT", Path(self.tmp.name)):
             with self.assertRaises(atlas.AtlasError):
                 atlas.load_key()
+
+
+
+class Music(unittest.TestCase):
+    def test_mux_trims_to_video_and_fades(self):
+        cmd = add_music.mux_cmd("v.mp4", "m.wav", "o.mp4", 19.7, add_music.DEFAULT)
+        af = cmd[cmd.index("-af") + 1]
+        self.assertIn("atrim=0:19.700", af)
+        self.assertIn("afade=t=out:st=17.200:d=2.5", af)
+        self.assertIn("0:v:0", cmd)
+        self.assertEqual(cmd[cmd.index("-c:v") + 1], "copy")   # 映像は再エンコードしない
+
+    def test_short_video_fade_never_exceeds_half(self):
+        af = add_music.mux_cmd("v", "m", "o", 3.0, add_music.DEFAULT)
+        self.assertIn("afade=t=out:st=1.500:d=1.5", " ".join(af))
+
+    def test_missing_ace_step_raises_without_running(self):
+        with mock.patch.object(add_music, "ACE_ROOT", Path("/nonexistent")), \
+             mock.patch.object(subprocess, "run", side_effect=AssertionError("実行した")):
+            with self.assertRaises(add_music.MusicError):
+                add_music.generate(add_music.DEFAULT, 20, Path("x.wav"))
+
+    def test_generate_passes_settings(self):
+        done = subprocess.CompletedProcess([], 0, stdout='{"seed": 1}\n', stderr="")
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(add_music, "ace_available", return_value=True), \
+             mock.patch.object(subprocess, "run", return_value=done) as run:
+            wav = Path(d) / "m.wav"; wav.write_bytes(b"")
+            add_music.generate({**add_music.DEFAULT, "bpm": 90}, 23.7, wav)
+        cmd = run.call_args[0][0]
+        self.assertEqual(cmd[cmd.index("--duration") + 1], "23.7")
+        self.assertEqual(cmd[cmd.index("--bpm") + 1], "90")
+
+    def test_jobs_music_settings_are_known_keys(self):
+        for f in (ROOT / "jobs").glob("*.json"):
+            m = json.loads(f.read_text()).get("music") or {}
+            self.assertFalse(set(m) - set(add_music.DEFAULT), f.name)
+
+    @unittest.skipUnless(os.environ.get("RUN_MUSIC"), "RUN_MUSIC=1 のときだけ（ACE-Step で約 3 分）")
+    def test_real_music_on_blender_video(self):
+        mp4 = make.build("calf_stretch")
+        out = add_music.add_music(mp4, {"seed": 1}, log=lambda m: None)
+        kinds = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type", "-of", "csv=p=0",
+                                str(out)], capture_output=True, text=True).stdout.split()
+        self.assertEqual(sorted(kinds), ["audio", "video"])
 
 
 if __name__ == "__main__":

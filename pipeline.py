@@ -3,6 +3,7 @@
 
   python3 pipeline.py jobs/calf_stretch_studio.json          # dry-run (プロンプトと概算費用だけ表示)
   python3 pipeline.py jobs/calf_stretch_studio.json --yes    # 実行 (課金される)
+  ジョブに "music" があれば、できた動画に合わせて曲を作って入れる（--no-music で省略）
 """
 import json, subprocess, sys, time
 from pathlib import Path
@@ -135,6 +136,12 @@ def main():
     subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp4), "-vf", "fps=0.5,scale=320:-1,tile=5x2",
                     "-frames:v", "1", "-y", str(outdir / "contact.jpg")], check=False)
     print(f"saved {mp4}  price ${meta['price']}")
+    if job.get("music") is not None and "--no-music" not in sys.argv:
+        import add_music
+        try:
+            mp4 = add_music.add_music(mp4, job["music"])
+        except add_music.MusicError as e:   # 動画はできているので止めない
+            print(f"曲は付けられなかった（無音の動画は保存済み）: {e}")
     if "--open" in sys.argv:
         subprocess.run(["open", str(mp4)])
 

@@ -16,5 +16,11 @@
  "space_desc": "a modern open office with light wood desks, white office chairs, monitors, large windows with soft daylight, potted plants, a few colleagues blurred working in the background.",
  "action_desc": "she sits on the chair and does a gentle seated calf and hamstring stretch, extending one leg forward with the heel on the floor and toes up, leaning forward and reaching her hands toward the shin, then switching legs. Calm, relaxed breathing, slight natural smile, moves slowly like an office worker taking a short break.",
  "camera": "smartphone_handheld",
- "resolution": "720p"
+ "resolution": "720p",
+ "music": {
+  "caption": "light acoustic piano with soft acoustic guitar, calm and positive wellness background music, gentle steady rhythm, warm, unobtrusive, no vocals",
+  "bpm": 80,
+  "key": "C Major",
+  "ts": "4"
+ }
 }

@@ -26,6 +26,7 @@ Blender で作った「木の人形が動く動画」を、AI 動画生成（See
 | ffmpeg（ffprobe を含む） | | 動画の長さを測る・確認用のコマ画像を作る |
 | curl | | アップロード・ダウンロード |
 | Atlas Cloud のアカウントと API キー | | 動画生成（**有料**） |
+| ACE-Step 1.5 ＋ uv（任意） | | 曲を付けるとき。リポジトリには入っていない（5.5 を参照） |
 
 macOS で ffmpeg を入れる場合: `brew install ffmpeg`
 
@@ -62,7 +63,8 @@ python3 pipeline.py jobs/calf_stretch_studio.json --yes --open
 
 | ファイル | 中身 |
 |---|---|
-| `<ジョブ名>.mp4` | 完成した動画（既定は音声トラックなし） |
+| `<ジョブ名>.mp4` | 完成した動画（音声トラックなし） |
+| `<ジョブ名>_music.mp4` / `_music.wav` | 曲入りの動画と、その曲（ジョブに `music` があるとき） |
 | `contact.jpg` | 2 秒ごとのコマを並べた確認用の画像 |
 | `result.json` | **実際にかかった費用**（`price`、米ドル） |
 | `request.json` / `job.json` | 送った内容（再現用） |
@@ -151,6 +153,46 @@ python3 blender/make.py build calf_stretch --gui --force
 
 椅子の高さ（`SEAT_TOP`）とモーションの座る高さは対になっています。片方だけ変えると、お尻が浮いたり椅子にめり込んだりします。
 
+## 5.5 曲を付ける（任意・ローカル・無料）
+
+Seedance の動画は**無音**で出ます。ジョブに `"music"` があると、動画ができたあとに
+**動画の長さに合わせて曲を作り**（[ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5)、手元の Mac で動く）、
+`<ジョブ名>_music.mp4` として入れます。無音の動画も残ります。
+
+```json
+"music": {
+ "caption": "light acoustic piano with soft acoustic guitar, calm and positive wellness background music, ...",
+ "bpm": 80, "key": "C Major", "ts": "4"
+}
+```
+
+| キー | 意味（既定値） |
+|---|---|
+| `caption` | 曲の雰囲気（英語）。楽器・テンポ感・用途を書く |
+| `bpm` / `key` / `ts` | テンポ（80）・調（C Major）・拍子（4 = 4/4） |
+| `seed` | 同じ値なら同じ曲になる（-1 = 毎回ランダム） |
+| `volume_db` | 曲の音量の調整（-4） |
+| `fade_in` / `fade_out` | 頭と終わりのフェードの秒数（0.5 / 2.5） |
+
+曲は動画より 4 秒長く作り、動画の長さで切って終わりをフェードアウトします。映像は再エンコードしません。
+
+```bash
+python3 add_music.py outputs/xxx/calf_stretch_studio.mp4 --job jobs/calf_stretch_studio.json --open
+python3 add_music.py video.mp4 --caption "upbeat ukulele, cheerful" --bpm 110   # 設定を直接書く
+python3 add_music.py video.mp4 --wav my_song.wav                               # 手持ちの曲を合わせるだけ（ACE-Step 不要）
+python3 pipeline.py jobs/xxx.json --yes --no-music                             # 曲を付けない
+```
+
+**ACE-Step はこのリポジトリに入っていません**（モデルだけで約 9.4GB）。使う人が自分で入れます。
+
+1. [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) の README に従ってインストールし、モデル（`acestep-v15-turbo`・`acestep-5Hz-lm-1.7B`）を `checkpoints/` に置く
+2. 置き場所が `~/ACE-Step-1.5` 以外なら `export ACESTEP_ROOT=/path/to/ACE-Step-1.5`
+3. [uv](https://docs.astral.sh/uv/) が必要（ACE-Step の環境で動かすため）
+4. Apple Silicon 以外では `export ACESTEP_LM_BACKEND=vllm` などに変える（既定は `mlx`、Mac 以外は未確認）
+
+実測: M シリーズの Mac で 1 曲約 3 分（モデルの読み込みを含む）。ACE-Step が無いときは、動画はそのまま保存され、曲だけ付きません。
+曲のライセンスは ACE-Step とモデルの規約に従ってください。
+
 ## 6. 費用と注意
 
 - **費用の実測**: 720p・約 20 秒で **$7.14／本**（約 $0.36／秒）。Atlas Cloud のモデル一覧に出る「$0.134」は最低単価で、実際の費用ではありません。
@@ -182,8 +224,9 @@ a.download(s["outputs"][0], "out.mp4")
 ## 8. テスト
 
 ```bash
-python3 -m unittest discover -s tests -v                  # 通信なし・費用ゼロ（18 件、1 秒未満）
+python3 -m unittest discover -s tests -v                  # 通信なし・費用ゼロ（1 秒未満）
 RUN_BLENDER=1 python3 -m unittest discover -s tests -v    # Blender で実際に動画を作るテストも（約 45 秒）
+RUN_BLENDER=1 RUN_MUSIC=1 python3 -m unittest discover -s tests -v   # ACE-Step で実際に曲を作るテストも（約 3 分）
 ```
 
 Atlas Cloud への送信はテストしていません（毎回料金がかかるため）。テストでは通信部分を差し替えています。
@@ -194,6 +237,8 @@ Atlas Cloud への送信はテストしていません（毎回料金がかか�
 anim2real/
   pipeline.py            全体を実行（Blender → Atlas Cloud → 保存）
   atlas.py               Atlas Cloud のクライアント
+  add_music.py           動画の長さに合わせて曲を作って入れる
+  music/gen_music.py     ACE-Step で曲を作る（ACE-Step の環境で動く）
   jobs/                  ジョブ設定（1 本 = 1 ファイル）
   assets/models/         人物の画像
   assets/spaces/         空間の画像
