@@ -71,10 +71,25 @@ def resolve(p):
     return p if p.is_absolute() else (ROOT / p).resolve()
 
 
+PERSON_FIELDS = (("outfit", "outfit"), ("hair", "hairstyle"), ("shoes", "shoes"))
+
+
+def person_prompt(p):
+    """person: base / outfit / hair / shoes / audience。未指定の項目は @Image1 のまま"""
+    s = f"Replace the wooden mannequin in @Video1 with the person from @Image1"
+    s += f" ({p['base']})." if p.get("base") else "."
+    s += " Keep the face and identity from @Image1."
+    for key, label in PERSON_FIELDS:
+        s += f" {label.capitalize()}: {p[key]}." if p.get(key) else f" Keep the {label} from @Image1."
+    if p.get("audience"):
+        s += (f" This video is made for {p['audience']}: the person should look like a relatable peer of that audience, "
+              "with natural, approachable body language and grooming that fits them.")
+    return s
+
+
 def build_prompt(job):
     parts = [
-        f"Replace the wooden mannequin in @Video1 with the person from @Image1: {job['model_desc']} "
-        "Keep the exact face, hairstyle and outfit.",
+        person_prompt(job["person"]),
         f"Follow the exact body motion and timing of @Video1: {job['action_desc']}",
         "Set the scene in the space from @Image2 (use only the room itself, not any people, props or UI in that image): "
         f"{job['space_desc']}",
@@ -100,7 +115,7 @@ def main():
     go = "--yes" in sys.argv
     job = json.loads(job_file.read_text())
     name = job.get("name", job_file.stem)
-    motion, model_img, space_img = (resolve(job[k]) for k in ("motion", "model_image", "space_image"))
+    motion, model_img, space_img = resolve(job["motion"]), resolve(job["person"]["image"]), resolve(job["space_image"])
     for p in (motion, model_img, space_img):
         if not p.exists():
             sys.exit(f"見つからない: {p}")

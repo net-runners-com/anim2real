@@ -7,12 +7,17 @@
 | キー | 内容 |
 |---|---|
 | `motion` | マネキン（Tポーズのリグ）でレンダした動画。例 `../anim/renders/calf_stretch_v2.mp4`。4〜30秒・24fps 以上 |
-| `model_image` / `model_desc` | 人物モデルの画像と、服装などの英文説明 |
+| `person.image` | 人物モデルの画像（顔と人物像はこの画像から取る） |
+| `person.base` | 人物の基本像（例: `a young Japanese woman in her late 20s`） |
+| `person.outfit` / `person.hair` / `person.shoes` | 服装・髪型・靴。書かなかった項目は画像のまま |
+| `person.audience` | どんな人に見せる動画か。その人たちが身近に感じる人物像・雰囲気に寄せる |
 | `space_image` / `space_desc` | 空間の画像と英文説明（置きたくない物は "no mat" のように明記） |
 | `action_desc` | 動きの説明（動画の動きを補足する） |
 | `camera` | `smartphone_handheld`（デフォルト）/ `tripod_phone` |
 | `resolution` | `720p` 推奨（費用を実測済みなのはこれだけ） |
 | `audio` | 環境音の指示 |
+
+設定の値は英語で書く（Seedance は日本語の指示を正しく読まない恐れがあるため）。
 
 ## 実行
 
