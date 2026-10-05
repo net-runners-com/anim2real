@@ -219,3 +219,8 @@ anim2real/
 | `--gui` で `Connection refused` | `blender/start.sh` で Blender を起動したか、ポートが合っているか確認する。`make.py setup` 済みか確認する |
 | 人物の顔が画像と違う | `person.base` と画像の印象を揃える。顔が大きく写った画像を使う |
 | 置いてほしくない物が出る | `space_desc` に `no ...` と書く。`space_image` に写っていないか確認する |
+
+## ライセンス
+
+- このリポジトリ（コード・サンプル画像）: MIT（`LICENSE`）
+- `blender/addons/blender_mcp-1.0.0.zip`: Blender Lab の MCP アドオン。GPL-3.0-or-later のまま改変せずに同梱している（`blender/addons/COPYING-GPL-3.0.txt`）。MIT の対象外
