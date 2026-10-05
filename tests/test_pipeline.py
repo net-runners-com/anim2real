@@ -35,6 +35,14 @@ class Prompt(unittest.TestCase):
             self.assertIn(ref, p)
         self.assertIn(pipeline.CAMERAS["smartphone_handheld"], p)
 
+    def test_silent_by_default(self):
+        job = json.loads((ROOT / "jobs/calf_stretch_studio.json").read_text())
+        self.assertNotIn("generate_audio", job)
+        p = pipeline.build_prompt(job)
+        self.assertNotIn("room tone", p)
+        job.update(generate_audio=True, audio="Birds chirping.")
+        self.assertIn("Birds chirping.", pipeline.build_prompt(job))
+
     def test_unknown_camera_fails(self):
         job = json.loads((ROOT / "jobs/calf_stretch_studio.json").read_text())
         job["camera"] = "drone"

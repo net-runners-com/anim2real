@@ -54,8 +54,9 @@ def build_prompt(job):
         f"{job['space_desc']}",
         CAMERAS[job.get("camera", "smartphone_handheld")],
         "Photorealistic, natural skin texture, realistic fabric wrinkles.",
-        job.get("audio", "Quiet room tone only, no music, no speech."),
     ]
+    if job.get("generate_audio"):   # 既定は無音（音は後で入れる前提）
+        parts.append(job.get("audio", "Quiet room tone only, no music, no speech."))
     if job.get("extra"):
         parts.append(job["extra"])
     return " ".join(parts)
@@ -109,7 +110,7 @@ def main():
         "reference_videos": [atlas.upload(motion)],
         "reference_images": [atlas.upload(model_img), atlas.upload(space_img)],
         "omni_reference_task_type": "edit", "duration": -1, "ratio": "adaptive",
-        "resolution": res, "generate_audio": job.get("generate_audio", True), "watermark": False,
+        "resolution": res, "generate_audio": bool(job.get("generate_audio", False)), "watermark": False,
     }
     outdir = ROOT / "outputs" / f"{name}_{time.strftime('%Y%m%d_%H%M%S')}"
     outdir.mkdir(parents=True)
@@ -124,7 +125,13 @@ def main():
     if s["status"] != "completed":
         sys.exit(f"失敗: {meta}")
 
-    mp4 = atlas.download(s["outputs"][0], outdir / f"{name}.mp4")
+    mp4 = outdir / f"{name}.mp4"
+    raw = atlas.download(s["outputs"][0], outdir / f"{name}_raw.mp4")
+    if job.get("generate_audio"):
+        raw.rename(mp4)
+    else:   # 無音指定でも音声トラックが付いてくる場合に備えて映像だけ取り出す（再エンコードなし）
+        subprocess.run(["ffmpeg", "-v", "error", "-i", str(raw), "-c", "copy", "-an", "-y", str(mp4)], check=True)
+        raw.unlink()
     subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp4), "-vf", "fps=0.5,scale=320:-1,tile=5x2",
                     "-frames:v", "1", "-y", str(outdir / "contact.jpg")], check=False)
     print(f"saved {mp4}  price ${meta['price']}")

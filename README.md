@@ -62,7 +62,7 @@ python3 pipeline.py jobs/calf_stretch_studio.json --yes --open
 
 | ファイル | 中身 |
 |---|---|
-| `<ジョブ名>.mp4` | 完成した動画 |
+| `<ジョブ名>.mp4` | 完成した動画（既定は音声トラックなし） |
 | `contact.jpg` | 2 秒ごとのコマを並べた確認用の画像 |
 | `result.json` | **実際にかかった費用**（`price`、米ドル） |
 | `request.json` / `job.json` | 送った内容（再現用） |
@@ -112,8 +112,7 @@ python3 blender/make.py build calf_stretch --gui --force
  "space_desc": "a plain off-white wall, light grey concrete-like floor with no mat or rug, ...",
  "action_desc": "she sits on the chair and does a gentle seated calf and hamstring stretch, ...",
  "camera": "smartphone_handheld",
- "resolution": "720p",
- "audio": "Quiet room tone only, no music, no speech."
+ "resolution": "720p"
 }
 ```
 
@@ -130,7 +129,8 @@ python3 blender/make.py build calf_stretch --gui --force
 | `action_desc` | 動きの説明（動画の動きの補足） |
 | `camera` | `smartphone_handheld`（スマホ手持ち、既定）/ `tripod_phone`（スマホを三脚に固定） |
 | `resolution` | `720p` を推奨（費用を実測しているのはこれだけ） |
-| `audio` | 音の指示。不要なら `"generate_audio": false` も書ける |
+| `generate_audio` | 既定は `false`（**無音の動画**。音は後から編集で入れる前提）。`true` にすると Seedance が環境音を付ける |
+| `audio` | `generate_audio: true` のときの音の指示（例 `"Quiet room tone only, no music, no speech."`） |
 | `extra` | 追加の指示（任意） |
 
 ## 5. 新しい動き・空間を足す
