@@ -61,6 +61,18 @@ def build_prompt(job):
     return " ".join(parts)
 
 
+def motion_video(job, dry_run=False):
+    """motion: 動画のパス、または {"blender": モーション名, "space": 空間名, "space_params": {...}}。
+    blender 指定なら blender/make.py で作る（既にあれば再利用）"""
+    m = job["motion"]
+    if isinstance(m, str):
+        return resolve(m)
+    sys.path.insert(0, str(ROOT / "blender"))
+    import make
+    return make.build(m["blender"], m.get("space", "basic_room"), gui=m.get("gui", False),
+                      space_params=m.get("space_params"), dry_run=dry_run)
+
+
 def duration_of(video):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
                          capture_output=True, text=True).stdout.strip()
@@ -74,13 +86,14 @@ def main():
     go = "--yes" in sys.argv
     job = json.loads(job_file.read_text())
     name = job.get("name", job_file.stem)
-    motion, model_img, space_img = resolve(job["motion"]), resolve(job["person"]["image"]), resolve(job["space_image"])
-    for p in (motion, model_img, space_img):
+    motion = motion_video(job, dry_run=not go)
+    model_img, space_img = resolve(job["person"]["image"]), resolve(job["space_image"])
+    for p in (model_img, space_img) + ((motion,) if go else ()):
         if not p.exists():
             sys.exit(f"見つからない: {p}")
 
     res = job.get("resolution", "720p")
-    dur = duration_of(motion)
+    dur = duration_of(motion) if motion.exists() else 20.0  # dry-run で未レンダなら仮の 20 秒
     rate = USD_PER_SEC.get(res)
     est = f"${dur * rate:.2f} (推定)" if rate else "不明 (この解像度は未計測)"
     prompt = build_prompt(job)

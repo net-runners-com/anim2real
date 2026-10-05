@@ -1,6 +1,9 @@
 {
  "name": "calf_stretch_studio",
- "motion": "../anim/renders/calf_stretch_v2.mp4",
+ "motion": {
+  "blender": "calf_stretch",
+  "space": "basic_room"
+ },
  "person": {
   "image": "assets/models/woman_beige_suit.png",
   "base": "a young Japanese woman in her late 20s",

@@ -1,3 +1,5 @@
 .env
 outputs/
 __pycache__/
+blender/renders/
+blender/scenes/
