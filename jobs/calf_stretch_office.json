@@ -5,11 +5,11 @@
   "space": "basic_room"
  },
  "person": {
-  "image": "assets/models/woman_beige_suit.png",
-  "base": "a young Japanese woman in her late 20s",
-  "outfit": "white blouse, beige tweed jacket and beige wide-leg trousers",
-  "hair": "dark hair tied back in a low ponytail",
-  "shoes": "white sneakers",
+  "image": "assets/models/woman_blue_shirt.png",
+  "base": "a Japanese woman in her 30s",
+  "outfit": "light blue button-down cotton shirt with the sleeves rolled up to the forearms, tucked into dark charcoal grey slim slacks, a thin brown leather wristwatch on the left wrist",
+  "hair": "dark hair loosely tied back at the nape",
+  "shoes": "simple black flat office shoes",
   "audience": "Japanese office workers in their 20s to 40s who sit at a desk all day"
  },
  "space_image": "assets/spaces/open_office.png",

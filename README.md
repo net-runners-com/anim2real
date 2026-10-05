@@ -103,11 +103,11 @@ python3 blender/make.py build calf_stretch --gui --force
  "name": "calf_stretch_studio",
  "motion": {"blender": "calf_stretch", "space": "basic_room"},
  "person": {
-  "image": "assets/models/woman_beige_suit.png",
-  "base": "a young Japanese woman in her late 20s",
-  "outfit": "white blouse, beige tweed jacket and beige wide-leg trousers",
-  "hair": "dark hair tied back in a low ponytail",
-  "shoes": "white sneakers",
+  "image": "assets/models/woman_blue_shirt.png",
+  "base": "a Japanese woman in her 30s",
+  "outfit": "light blue button-down shirt with rolled-up sleeves, dark charcoal grey slacks, brown leather wristwatch",
+  "hair": "dark hair loosely tied back at the nape",
+  "shoes": "simple black flat office shoes",
   "audience": "Japanese office workers in their 20s to 40s who sit at a desk all day"
  },
  "space_image": "assets/spaces/white_studio.png",
@@ -124,7 +124,7 @@ python3 blender/make.py build calf_stretch --gui --force
 | `motion.space_params` | 空間の土台の数値の上書き（例 `{"cam_yaw": 30, "chair": false}`）。項目は `blender/spaces/basic_room.py` の大文字の定数 |
 | `person.image` | 人物の画像。**顔と人物像はこの画像から取る** |
 | `person.base` | どんな人か（年代・性別など） |
-| `person.outfit` / `hair` / `shoes` | 服装・髪型・靴。**書かなかった項目は画像のまま** |
+| `person.outfit` / `hair` / `shoes` | 服装・髪型・靴。**書いた内容は画像より優先される**（画像と違うことを書くと服が変わる）。画像の服のままにしたい項目は書かないか、画像どおりに書く |
 | `person.audience` | 誰に見せる動画か。その人たちが身近に感じる見た目・雰囲気に寄せる |
 | `space_image` | 場所の画像。**見た目（壁・床・家具の雰囲気）はこの画像で決まる**。写っている人物や再生ボタンなどは使わないよう指示している |
 | `space_desc` | 場所の説明。置きたくない物は `no mat` のように明記する |

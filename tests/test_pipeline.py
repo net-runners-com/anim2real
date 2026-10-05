@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "blender")]
 import add_music, atlas, make, pipeline  # noqa: E402
 
-PERSON = {"image": "assets/models/woman_beige_suit.png", "base": "a man in his 40s",
+PERSON = {"image": "assets/models/woman_blue_shirt.png", "base": "a man in his 40s",
           "outfit": "navy polo shirt", "audience": "factory workers"}
 
 
